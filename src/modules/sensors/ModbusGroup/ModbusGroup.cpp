@@ -3,10 +3,48 @@
 #include <map>
 #include <vector>
 #include <HardwareSerial.h>
-
 #include "Logging.h"
 #include "ModbusClientRTU.h"
 #include "CoilData.h"
+#include <esp_heap_caps.h> // Необходим для работы с каплями памяти ESP32
+
+// Кастомный аллокатор для размещения std::map/std::vector в PSRAM
+template <typename T>
+struct PsramAllocator {
+    using value_type = T;
+    PsramAllocator() = default;
+    template <typename U> PsramAllocator(const PsramAllocator<U>&) {}
+
+    T* allocate(size_t n) {
+        if (n == 0) return nullptr;
+        // Выделяем память напрямую в PSRAM
+        void* p = heap_caps_malloc(n * sizeof(T), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (!p) throw std::bad_alloc();
+        return static_cast<T*>(p);
+    }
+
+    void deallocate(T* p, size_t) {
+        heap_caps_free(p);
+    }
+
+    template <typename U> bool operator==(const PsramAllocator<U>&) const { return true; }
+    template <typename U> bool operator!=(const PsramAllocator<U>&) const { return false; }
+};
+
+// Применяем PSRAM-аллокатор для глобальных карт, чтобы разгрузить внутреннюю SRAM
+template <typename K, typename V>
+using PsramMap = std::map<K, V, std::less<K>, PsramAllocator<std::pair<const K, V>>>;
+
+template <typename T>
+using PsramVector = std::vector<T, PsramAllocator<T>>;
+
+// Forward declarations классов
+class ModbusGroupPoll;
+class ModbusGroupSens;
+
+// Единственное объявление глобальных карт в PSRAM
+static PsramMap<uint32_t, ModbusGroupPoll*> MBGroupTokenMap;
+static PsramMap<String, ModbusGroupPoll*> GroupPollersMap;
 
 // -------------------------------------------------------------
 // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ МОДУЛЯ
@@ -29,12 +67,6 @@ static IoTItem *_mbClientInstance = nullptr;
 
 static int8_t MODBUS_DIR_PIN = MODBUS_DIR_PIN_DEF;
 static int8_t MODBUS_UART_LINE = MODBUS_UART_LINE_DEF;
-
-class ModbusGroupPoll;
-class ModbusGroupSens;
-
-static std::map<uint32_t, ModbusGroupPoll*> MBGroupTokenMap;
-static std::map<String, ModbusGroupPoll*> GroupPollersMap;
 
 // Прототипы глобальных обработчиков eModbus
 void handleModBusGroupData(ModbusMessage response, uint32_t token);
@@ -219,7 +251,6 @@ public:
             uint8_t addr = parseAddr(param[0]);
             uint16_t reg = parseRegister(param[1]);
             
-            // Универсальное и безопасное получение int16
             int32_t valInt = 0;
             if (param[2].isDecimal) {
                 valInt = (int32_t)param[2].valD;
@@ -256,7 +287,6 @@ public:
 
             std::vector<uint16_t> wData;
 
-            // Если передан ровно 1 аргумент значения и он является float-числом (например, -1.5)
             if (param.size() == 3 && param[2].isDecimal && (param[2].valD != (float)(int32_t)param[2].valD)) {
                 union {
                     float f;
@@ -268,7 +298,6 @@ public:
                 wData.push_back(u.w[0]); // Low Word
             } 
             else {
-                // Разбор массива целых чисел / переменных (включая отрицательные)
                 uint16_t numRegs = param.size() - 2;
                 wData.resize(numRegs);
 
@@ -504,75 +533,73 @@ public:
         }
     }
 
-void updateValueFromBuffer(ModbusMessage& response, uint8_t func) {
-    float currentVal = 0.0f;
+    void updateValueFromBuffer(ModbusMessage& response, uint8_t func) {
+        float currentVal = 0.0f;
 
-    if (func == 0x01 || func == 0x02) {
-        // В eModbus байты данных начинаются с индекса 3 (после Addr, Func, ByteCount)
-        uint16_t byteIdx = 3 + (_offset / 8);
-        uint8_t bitIdx   = _offset % 8;
+        if (func == 0x01 || func == 0x02) {
+            uint16_t byteIdx = 3 + (_offset / 8);
+            uint8_t bitIdx   = _offset % 8;
 
-        if (byteIdx < response.size()) {
-            currentVal = (response[byteIdx] & (1 << bitIdx)) ? 1.0f : 0.0f;
-        } else {
-            if (_modbusDebug) {
-                SerialPrint("E", "ModbusGroupSens", "Ошибка: byteIdx " + String(byteIdx) + " выходит за предел response.size() " + String(response.size()));
+            if (byteIdx < response.size()) {
+                currentVal = (response[byteIdx] & (1 << bitIdx)) ? 1.0f : 0.0f;
+            } else {
+                if (_modbusDebug) {
+                    SerialPrint("E", "ModbusGroupSens", "Ошибка: byteIdx " + String(byteIdx) + " выходит за предел response.size() " + String(response.size()));
+                }
+                return;
             }
-            return;
-        }
-    } 
-    else {
-        uint16_t regIndex = _offset; 
-        uint16_t byteOffset = 3 + (regIndex * 2);
-
-        uint8_t requiredBytes = (_count > 0) ? (_count * 2) : 2;
-        if ((byteOffset + requiredBytes) > response.size()) {
-            return; 
-        }
-
-        if (_isFloat && _count == 2) {
-            union {
-                uint32_t b32;
-                float f;
-            } u;
-            u.b32 = ((uint32_t)response[byteOffset]     << 24) |
-                    ((uint32_t)response[byteOffset + 1] << 16) |
-                    ((uint32_t)response[byteOffset + 2] << 8)  |
-                     (uint32_t)response[byteOffset + 3];
-            currentVal = u.f;
-        } 
-        else if (_count == 2) {
-            int32_t rawVal = ((uint32_t)response[byteOffset]     << 24) |
-                             ((uint32_t)response[byteOffset + 1] << 16) |
-                             ((uint32_t)response[byteOffset + 2] << 8)  |
-                              (uint32_t)response[byteOffset + 3];
-            currentVal = (float)rawVal;
         } 
         else {
-            uint16_t uVal = ((uint16_t)response[byteOffset] << 8) |
-                             (uint16_t)response[byteOffset + 1];
-            int16_t rawVal = (int16_t)uVal; 
-            currentVal = (float)rawVal;
+            uint16_t regIndex = _offset; 
+            uint16_t byteOffset = 3 + (regIndex * 2);
+
+            uint8_t requiredBytes = (_count > 0) ? (_count * 2) : 2;
+            if ((byteOffset + requiredBytes) > response.size()) {
+                return; 
+            }
+
+            if (_isFloat && _count == 2) {
+                union {
+                    uint32_t b32;
+                    float f;
+                } u;
+                u.b32 = ((uint32_t)response[byteOffset]     << 24) |
+                        ((uint32_t)response[byteOffset + 1] << 16) |
+                        ((uint32_t)response[byteOffset + 2] << 8)  |
+                         (uint32_t)response[byteOffset + 3];
+                currentVal = u.f;
+            } 
+            else if (_count == 2) {
+                int32_t rawVal = ((uint32_t)response[byteOffset]     << 24) |
+                                 ((uint32_t)response[byteOffset + 1] << 16) |
+                                 ((uint32_t)response[byteOffset + 2] << 8)  |
+                                  (uint32_t)response[byteOffset + 3];
+                currentVal = (float)rawVal;
+            } 
+            else {
+                uint16_t uVal = ((uint16_t)response[byteOffset] << 8) |
+                                 (uint16_t)response[byteOffset + 1];
+                int16_t rawVal = (int16_t)uVal; 
+                currentVal = (float)rawVal;
+            }
+
+            if (_div != 0.0f) {
+                currentVal /= _div;
+            }
+        }        
+
+        if (_round > 0) {
+            float factor = pow(10, _round);
+            currentVal = round(currentVal * factor) / factor;
         }
 
-        if (_div != 0.0f) {
-            currentVal /= _div;
+        if (_onlyOnChange) {
+            if (currentVal == _lastVal) return;
+            _lastVal = currentVal;
         }
-    }        
 
-    if (_round > 0) {
-        float factor = pow(10, _round);
-        currentVal = round(currentVal * factor) / factor;
+        regEvent(currentVal, _id);
     }
-
-    if (_onlyOnChange) {
-        if (currentVal == _lastVal) return;
-        _lastVal = currentVal;
-    }
-
-    // ВАЖНО: передаём _id элемента для корректного ивента в сценариях
-    regEvent(currentVal, _id);
-}
 
     void doByInterval() override {}
     ~ModbusGroupSens() {}
@@ -618,7 +645,6 @@ void handleModBusGroupError(Error error, uint32_t token) {
         MBGroupTokenMap.erase(token);
     }
 
-    // Отправляем событие ошибки строго клиенту
     if (_mbClientInstance) {
         _mbClientInstance->regEvent(1.0f, "mb_error");
     }

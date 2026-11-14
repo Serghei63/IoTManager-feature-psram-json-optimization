@@ -51,8 +51,18 @@
             "count": 1,
             "isFloat": 0,
             "div": 10,
+            "plus": 0,
             "round": 1,
-            "onlyOnChange": 0
+            "onlyOnChange": 0,
+            "order": 1,
+            "options": {
+                "div":  [1, 10, 100, 1000],
+                "round": [0, 1, 2, 3],
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "onlyOnChange": [0, 1],
+                "isFloat": [0, 1]
+           }
         }
     ],
     "about": {
@@ -61,7 +71,7 @@
         "authorGit": "https://github.com/Serghei63",
         "specialThanks": "Mit4bmw",
         "moduleName": "ModbusGroup",
-        "moduleVersion": "2.0",
+        "moduleVersion": "2.1",
         "usedRam": {
             "esp32_4mb": 10,
             "esp8266_4mb": 10
