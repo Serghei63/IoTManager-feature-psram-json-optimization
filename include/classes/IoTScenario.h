@@ -1,3 +1,4 @@
+/*
 #pragma once
 #include "Global.h"
 #include "classes/IoTItem.h"
@@ -92,6 +93,77 @@ class IoTScenario {
     void clear();
 
    public:
+    void loadScenario(const String &fileName);
+    void exec(const String &eventIdName);
+    void exec(uint32_t eventHash);
+
+    IoTScenario();
+    ~IoTScenario();
+};
+*/
+#pragma once
+#include "Global.h"
+#include "classes/IoTItem.h"
+
+class IfExprAST; // Forward declaration
+
+class ExprAST {
+   public:
+    virtual ~ExprAST();
+    virtual IoTValue *exec();
+    virtual int setValue(IoTValue *val, bool generateEvent);  // ret 0 - установка значения не поддерживается наследником
+    virtual bool hasEventIdName(uint32_t eventHash);
+    
+    // Безопасная проверка типа и уровня без RTTI
+    virtual bool isIfExpr() const { return false; }
+    virtual bool isTopLevel() const { return false; }
+};
+
+class IoTScenario {
+    String IdentifierStr;     
+    uint32_t IdentifierHash;  
+    String NumStr = "";       
+    int LastChar;
+    int curLine;
+
+    // Убедитесь, что эта строка здесь есть:
+    int gettok();
+
+    int CurTok;
+    int getNextToken();
+
+    std::vector<uint32_t> _condHashes;  
+    int _ifDepth = 0;                   
+    bool _parseError = false;
+
+    // Указатель на текущий родительский if для вложенных конструкций
+    IfExprAST *_currentParentIf = nullptr;
+
+    int GetTokPrecedence();
+    ExprAST *Error(const String &Str);
+
+    ExprAST *ParseIdentifierExpr(bool callFromCondition);
+    ExprAST *ParseNumberExpr(bool negative = false);
+    ExprAST *ParseParenExpr(bool callFromCondition);
+    ExprAST *ParseBracketsExpr(bool callFromCondition);
+    ExprAST *ParseQuotesExpr();
+    ExprAST *ParseIfExpr();
+    ExprAST *ParsePrimary(bool callFromCondition);
+    ExprAST *ParseBinOpRHS(int ExprPrec, ExprAST *LHS, bool callFromCondition);
+    ExprAST *ParseExpression(bool callFromCondition);
+
+    int getLastChar();
+    fs::File file;
+
+    std::vector<ExprAST *> _ifs;  // Все блоки if (и top-level, и вложенные)
+
+    int _execDepth = 0;           
+    String _pendingFileName = ""; 
+
+    void clear();
+
+   public:
+    void addIfNode(ExprAST *node);
     void loadScenario(const String &fileName);
     void exec(const String &eventIdName);
     void exec(uint32_t eventHash);
