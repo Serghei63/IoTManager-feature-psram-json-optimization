@@ -496,11 +496,11 @@ public:
 };
 
 // -------------------------------------------------------------
-// 3. КЛАСС ДОЧЕРНЕГО СЕНСОРА
+// 3. КЛАСС ДОЧЕРНЕГО СЕНСОРА (Оптимизированный)
 // -------------------------------------------------------------
 class ModbusGroupSens : public IoTItem {
 private:
-    uint8_t _offset = 0;
+    uint16_t _offset = 0;
     uint8_t _count = 1;
     bool _isFloat = false;
     float _div = 1.0f;
@@ -526,7 +526,7 @@ public:
         if (GroupPollersMap.count(parentId)) {
             GroupPollersMap[parentId]->addChild(this);
             if (_modbusDebug) {
-                SerialPrint("I", "ModbusGroupSens", "Сенсор id:" + getID() + " привязан к поллеру:" + parentId + " (offset/bit:" + String(_offset) + ")");
+                SerialPrint("I", "ModbusGroupSens", "Сенсор id:" + getID() + " привязан к поллеру:" + parentId);
             }
         } else {
             SerialPrint("E", "ModbusGroupSens", "Ошибка: Родительский поллер не найден: " + parentId);
@@ -536,63 +536,58 @@ public:
     void updateValueFromBuffer(ModbusMessage& response, uint8_t func) {
         float currentVal = 0.0f;
 
+        // 1. Битовые функции (Coils / Discrete Inputs)
         if (func == 0x01 || func == 0x02) {
-            uint16_t byteIdx = 3 + (_offset / 8);
-            uint8_t bitIdx   = _offset % 8;
+            uint16_t byteIdx = 3 + (_offset >> 3); // Быстрое деление на 8 через сдвиг (_offset / 8)
+            uint8_t bitIdx   = _offset & 7;      // Быстрый остаток от деления на 8 (_offset % 8)
 
             if (byteIdx < response.size()) {
                 currentVal = (response[byteIdx] & (1 << bitIdx)) ? 1.0f : 0.0f;
             } else {
-                if (_modbusDebug) {
-                    SerialPrint("E", "ModbusGroupSens", "Ошибка: byteIdx " + String(byteIdx) + " выходит за предел response.size() " + String(response.size()));
-                }
                 return;
             }
         } 
+        // 2. Регистровые функции (Holding / Input Registers)
         else {
-            uint16_t regIndex = _offset; 
-            uint16_t byteOffset = 3 + (regIndex * 2);
-
-            uint8_t requiredBytes = (_count > 0) ? (_count * 2) : 2;
+            uint16_t byteOffset = 3 + (_offset << 1); // Быстрое умножение на 2 (_offset * 2)
+            uint8_t requiredBytes = _count << 1;     // (_count * 2)
+            
             if ((byteOffset + requiredBytes) > response.size()) {
                 return; 
             }
 
+            // Прямое чтение без лишних аллокаций
             if (_isFloat && _count == 2) {
-                union {
-                    uint32_t b32;
-                    float f;
-                } u;
-                u.b32 = ((uint32_t)response[byteOffset]     << 24) |
-                        ((uint32_t)response[byteOffset + 1] << 16) |
-                        ((uint32_t)response[byteOffset + 2] << 8)  |
-                         (uint32_t)response[byteOffset + 3];
-                currentVal = u.f;
+                uint32_t b32 = ((uint32_t)response[byteOffset]     << 24) |
+                               ((uint32_t)response[byteOffset + 1] << 16) |
+                               ((uint32_t)response[byteOffset + 2] << 8)  |
+                                (uint32_t)response[byteOffset + 3];
+                currentVal = *reinterpret_cast<float*>(&b32);
             } 
             else if (_count == 2) {
                 int32_t rawVal = ((uint32_t)response[byteOffset]     << 24) |
                                  ((uint32_t)response[byteOffset + 1] << 16) |
                                  ((uint32_t)response[byteOffset + 2] << 8)  |
                                   (uint32_t)response[byteOffset + 3];
-                currentVal = (float)rawVal;
+                currentVal = static_cast<float>(rawVal);
             } 
             else {
-                uint16_t uVal = ((uint16_t)response[byteOffset] << 8) |
-                                 (uint16_t)response[byteOffset + 1];
-                int16_t rawVal = (int16_t)uVal; 
-                currentVal = (float)rawVal;
+                int16_t rawVal = static_cast<int16_t>((response[byteOffset] << 8) | response[byteOffset + 1]);
+                currentVal = static_cast<float>(rawVal);
             }
 
-            if (_div != 0.0f) {
+            if (_div != 1.0f) {
                 currentVal /= _div;
             }
         }        
 
+        // Округление, если задано
         if (_round > 0) {
             float factor = pow(10, _round);
-            currentVal = round(currentVal * factor) / factor;
+            currentVal = roundf(currentVal * factor) / factor;
         }
 
+        // Фильтрация "только при изменении" для разгрузки шины сценариев и MQTT
         if (_onlyOnChange) {
             if (currentVal == _lastVal) return;
             _lastVal = currentVal;
