@@ -18,7 +18,14 @@
             "baud": 19200,
             "protocol": "SERIAL_8N1",
             "debug": 1,
-            "UARTLine": 1
+            "UARTLine": 1,
+            "order": 1,
+            "options": {
+                "baud": ["9600", "19200"],
+                "protocol": ["SERIAL_8N1", "SERIAL_8N2"],
+                "debug": [0, 1, 2, 3],
+                "UARTLine": [0, 1, 2]
+            }
         }
     ],
     "about": {
