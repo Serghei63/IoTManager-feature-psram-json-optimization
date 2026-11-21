@@ -12,8 +12,12 @@
             "page": "Radio",
             "descr": "Radio",
             "int": 1,
-            "pins": "18,19,21"
-            
+            "pins": "15,16,21",
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "needSave": [0, 1]
+            }
         }
     ],
     "about": {
@@ -33,7 +37,7 @@
             "title": "Название текущей радиостанции.",
             "track": "Название проигрываемого трека и исполнитель.",
             "volume": "Уровень громкости (0-100).",
-            "pins": "GPIO по маркировке платы: WSEL, DIN, BCLK (по умолчанию: 18,19,21)"
+            "pins": "GPIO по маркировке платы: WSEL, DIN, BCLK (по умолчанию: 15,16,21)"
         },
         "retInfo": "Содержит описание текущего статуса модуля, например, Time Out! - не может подключиться",
         "funcInfo": [
@@ -61,7 +65,7 @@
     "defActive": false,
     "usedLibs": {
         "esp32*": [
-            "earlephilhower/ESP8266Audio @ ^1.9.7"  
+            "earlephilhower/ESP8266Audio @ ^1.9.7"
         ]
     }
 }

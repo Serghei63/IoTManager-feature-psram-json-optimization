@@ -1,6 +1,9 @@
 #include "Global.h"
 #include "classes/IoTItem.h"
 #include <WiFi.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/portmacro.h"
 
 // Основные компоненты ESP8266Audio
 #include "AudioFileSourceHTTPStream.h"
@@ -16,121 +19,185 @@
 
 class Radio1334 : public IoTItem {
 private:
-    // Пины по умолчанию: WSEL -> 18, DIN -> 19, BCLK -> 21
-    int _wclk = 18; // WSEL / WS
-    int _dout = 19; // DIN / DOUT
-    int _bclk = 21; // BCLK / BCK
-    
+    // Жестко привязанные на плате пины по умолчанию: WSEL -> 15, DIN -> 16, BCLK -> 21
+    int _wclk = 15;
+    int _dout = 16;
+    int _bclk = 21;
+
     int _volume = 70; // 0..100%
     String _url = "";
-    String _stationName = "Stopped"; 
-    
+    String _stationName = "Stopped";
+
     // Компоненты ESP8266Audio
-    AudioFileSourceHTTPStream* _file      = nullptr;
-    AudioFileSourceBuffer*     _buff      = nullptr;
-    AudioGenerator*            _decoder   = nullptr;
-    AudioOutputI2S*            _out       = nullptr;
-    uint8_t*                   _psramBuf  = nullptr; // Выделенный буфер в PSRAM
-    
+    AudioFileSourceHTTPStream* _file     = nullptr;
+    AudioFileSourceBuffer*     _buff     = nullptr;
+    AudioGenerator*            _decoder  = nullptr;
+    AudioOutputI2S*            _out      = nullptr;
+    uint8_t*                   _psramBuf = nullptr;
+
     TaskHandle_t _radioTaskHandle = nullptr;
+    portMUX_TYPE _mux = portMUX_INITIALIZER_UNLOCKED;
 
-public:
-    bool _isPlaying = false;
-    bool _needsConnect = false;
-    bool _needsStop = false;
+    volatile bool _isPlaying    = false;
+    volatile bool _needsConnect = false;
+    volatile bool _needsStop    = false;
+    volatile bool _taskRunning  = true;
 
-    // Фоновый таск FreeRTOS на Core 0
+    int parsePinOrDefault(const String& token, int defaultPin) {
+        String s = token;
+        s.trim();
+        if (s.length() == 0) return defaultPin;
+        for (size_t i = 0; i < s.length(); i++) {
+            if (!isDigit(s[i])) return defaultPin;
+        }
+        return s.toInt();
+    }
+
+    void requestConnect(const String& url, const String& station) {
+        portENTER_CRITICAL(&_mux);
+        if (url.length() > 0) {
+            _url = url;
+        }
+        if (station.length() > 0) {
+            _stationName = station;
+        }
+        _needsStop = false;
+        _needsConnect = true;
+        portEXIT_CRITICAL(&_mux);
+    }
+
+    void requestStop() {
+        portENTER_CRITICAL(&_mux);
+        _needsConnect = false;
+        _needsStop = true;
+        portEXIT_CRITICAL(&_mux);
+    }
+
+    bool allocateBuffer() {
+        static constexpr size_t PSRAM_BUFF_SIZE = 512 * 1024;
+        static constexpr size_t DRAM_BUFF_SIZE  = 64 * 1024;
+
+#if defined(BOARD_HAS_PSRAM) || defined(CONFIG_SPIRAM_SUPPORT)
+        if (psramFound()) {
+            _psramBuf = (uint8_t*)heap_caps_malloc(PSRAM_BUFF_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+            if (_psramBuf) {
+                _buff = new AudioFileSourceBuffer(_file, _psramBuf, PSRAM_BUFF_SIZE);
+                Serial.println("[UDA1334 Task] 512 KB stream buffer allocated in PSRAM");
+                return (_buff != nullptr);
+            }
+        }
+#endif
+        _buff = new AudioFileSourceBuffer(_file, DRAM_BUFF_SIZE);
+        Serial.println("[UDA1334 Task] 64 KB buffer allocated in DRAM (PSRAM fallback)");
+        return (_buff != nullptr);
+    }
+
+    AudioGenerator* createDecoderForUrl(const String& url) {
+        String urlLower = url;
+        urlLower.toLowerCase();
+
+        if (urlLower.indexOf(".aac") != -1 || urlLower.indexOf("/aac") != -1 || urlLower.indexOf("format=aac") != -1) {
+            Serial.println("[UDA1334 Task] Selected codec: AAC");
+            return new AudioGeneratorAAC();
+        }
+        if (urlLower.indexOf(".flac") != -1) {
+            Serial.println("[UDA1334 Task] Selected codec: FLAC");
+            return new AudioGeneratorFLAC();
+        }
+        if (urlLower.indexOf(".wav") != -1) {
+            Serial.println("[UDA1334 Task] Selected codec: WAV");
+            return new AudioGeneratorWAV();
+        }
+        Serial.println("[UDA1334 Task] Selected codec: MP3");
+        return new AudioGeneratorMP3();
+    }
+
+    void connectStream() {
+        stopAudioPipeline();
+        vTaskDelay(pdMS_TO_TICKS(150));
+
+        String targetUrl;
+        int currentVol;
+        portENTER_CRITICAL(&_mux);
+        targetUrl = _url;
+        currentVol = _volume;
+        portEXIT_CRITICAL(&_mux);
+
+        if (WiFi.status() != WL_CONNECTED || targetUrl.length() == 0) {
+            Serial.println("[UDA1334 Task] Wi-Fi not connected or empty URL!");
+            return;
+        }
+
+        Serial.printf("[UDA1334 Task] Connecting to: %s\n", targetUrl.c_str());
+        _file = new AudioFileSourceHTTPStream(targetUrl.c_str());
+        if (!_file || !allocateBuffer()) {
+            Serial.println("[UDA1334 Task] Failed to create stream or buffer!");
+            stopAudioPipeline();
+            return;
+        }
+
+        _out = new AudioOutputI2S();
+        _out->SetPinout(_bclk, _wclk, _dout);
+        _out->SetGain((float)currentVol / 100.0f);
+
+        _decoder = createDecoderForUrl(targetUrl);
+        if (_decoder && _decoder->begin(_buff, _out)) {
+            _isPlaying = true;
+            Serial.println("[UDA1334 Task] Playback started!");
+        } else {
+            Serial.println("[UDA1334 Task] Decoder start failed!");
+            stopAudioPipeline();
+        }
+    }
+
     static void radioWorker(void* pvParameters) {
-        Radio1334* instance = (Radio1334*)pvParameters;
-        
-        esp_task_wdt_delete(NULL); 
-        vTaskDelay(pdMS_TO_TICKS(200)); 
+        Radio1334* instance = static_cast<Radio1334*>(pvParameters);
 
-        while (true) {
-            // Подключение к новому потоку или авто-реконнект
-            if (instance->_needsConnect) {
+        esp_task_wdt_delete(NULL);
+        vTaskDelay(pdMS_TO_TICKS(200));
+
+        while (instance->_taskRunning) {
+            bool doStop = false;
+            bool doConnect = false;
+
+            portENTER_CRITICAL(&instance->_mux);
+            doStop = instance->_needsStop;
+            if (doStop) {
+                instance->_needsStop = false;
                 instance->_needsConnect = false;
-                instance->stopAudioPipeline(); // Очищаем старый поток перед запуском
-
-                vTaskDelay(pdMS_TO_TICKS(150)); // Пауза для дефрагментации Heap
-
-                if (WiFi.status() == WL_CONNECTED && instance->_url.length() > 0) {
-                    Serial.printf("[UDA1334 Task] Connecting to: %s\n", instance->_url.c_str());
-                    
-                    instance->_file = new AudioFileSourceHTTPStream(instance->_url.c_str());
-
-                    // Выделяем 512 КБ под буфер потока в PSRAM
-                    size_t buffSize = 512 * 1024;
-                    #if defined(BOARD_HAS_PSRAM) || defined(CONFIG_SPIRAM_SUPPORT)
-                        instance->_psramBuf = (uint8_t*)heap_caps_malloc(buffSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-                    #endif
-
-                    if (instance->_psramBuf) {
-                        instance->_buff = new AudioFileSourceBuffer(instance->_file, instance->_psramBuf, buffSize);
-                        Serial.println("[UDA1334 Task] 512 KB stream buffer allocated in PSRAM");
-                    } else {
-                        // Фолбэк в обычную DRAM, если PSRAM недоступна
-                        instance->_buff = new AudioFileSourceBuffer(instance->_file, 64 * 1024);
-                        Serial.println("[UDA1334 Task] Buffer allocated in DRAM (PSRAM fallback)");
-                    }
-                    
-                    instance->_out = new AudioOutputI2S();
-                    instance->_out->SetPinout(instance->_bclk, instance->_wclk, instance->_dout);
-                    
-                    float gain = (float)instance->_volume / 100.0f;
-                    instance->_out->SetGain(gain);
-
-                    // Выбор кодека на основе URL
-                    String urlLower = instance->_url;
-                    urlLower.toLowerCase();
-
-                    if (urlLower.indexOf(".aac") != -1 || urlLower.indexOf("/aac") != -1 || urlLower.indexOf("format=aac") != -1) {
-                        instance->_decoder = new AudioGeneratorAAC();
-                        Serial.println("[UDA1334 Task] Selected codec: AAC");
-                    } 
-                    else if (urlLower.indexOf(".flac") != -1) {
-                        instance->_decoder = new AudioGeneratorFLAC();
-                        Serial.println("[UDA1334 Task] Selected codec: FLAC");
-                    } 
-                    else if (urlLower.indexOf(".wav") != -1) {
-                        instance->_decoder = new AudioGeneratorWAV();
-                        Serial.println("[UDA1334 Task] Selected codec: WAV");
-                    } 
-                    else {
-                        instance->_decoder = new AudioGeneratorMP3();
-                        Serial.println("[UDA1334 Task] Selected codec: MP3");
-                    }
-
-                    if (instance->_decoder->begin(instance->_buff, instance->_out)) {
-                        instance->_isPlaying = true;
-                        Serial.println("[UDA1334 Task] Playback started!");
-                    } else {
-                        Serial.println("[UDA1334 Task] Decoder start failed!");
-                        instance->stopAudioPipeline();
-                    }
-                } else {
-                    Serial.println("[UDA1334 Task] Wi-Fi not connected or empty URL!");
+            } else {
+                doConnect = instance->_needsConnect;
+                if (doConnect) {
+                    instance->_needsConnect = false;
                 }
             }
+            portEXIT_CRITICAL(&instance->_mux);
 
-            // Остановка потока
-            if (instance->_needsStop) {
-                instance->_needsStop = false;
+            if (doStop) {
                 instance->stopAudioPipeline();
+            } else if (doConnect) {
+                instance->connectStream();
             }
 
-            // Цикл декодирования фреймов
             if (instance->_isPlaying && instance->_decoder) {
                 if (instance->_decoder->isRunning()) {
                     if (!instance->_decoder->loop()) {
                         Serial.println("[UDA1334 Task] Stream lost or finished! Reconnecting in 2s...");
                         instance->stopAudioPipeline();
-                        
-                        // Автопереподключение при обрыве сети (если не ждем явную остановку)
-                        if (!instance->_needsStop && instance->_url.length() > 0) {
-                            vTaskDelay(pdMS_TO_TICKS(2000));
+
+                        for (int i = 0; i < 20 && instance->_taskRunning; i++) {
+                            portENTER_CRITICAL(&instance->_mux);
+                            bool aborted = instance->_needsStop || instance->_needsConnect;
+                            portEXIT_CRITICAL(&instance->_mux);
+                            if (aborted) break;
+                            vTaskDelay(pdMS_TO_TICKS(100));
+                        }
+
+                        portENTER_CRITICAL(&instance->_mux);
+                        if (!instance->_needsStop && !instance->_needsConnect && instance->_url.length() > 0) {
                             instance->_needsConnect = true;
                         }
+                        portEXIT_CRITICAL(&instance->_mux);
                     }
                 } else {
                     instance->_isPlaying = false;
@@ -140,10 +207,14 @@ public:
                 vTaskDelay(pdMS_TO_TICKS(50));
             }
         }
+
+        instance->stopAudioPipeline();
+        vTaskDelete(nullptr);
     }
 
     void stopAudioPipeline() {
         _isPlaying = false;
+
         if (_decoder) {
             if (_decoder->isRunning()) _decoder->stop();
             delete _decoder;
@@ -169,19 +240,14 @@ public:
         }
     }
 
+public:
     Radio1334(String parameters) : IoTItem(parameters) {
         String pins;
-        jsonRead(parameters, "pins", pins);
-        
-        // Согласно порядку в modinfo: WSEL (0), DIN (1), BCLK (2)
-        _wclk = selectFromMarkerToMarker(pins, ",", 0).toInt();
-        _dout = selectFromMarkerToMarker(pins, ",", 1).toInt();
-        _bclk = selectFromMarkerToMarker(pins, ",", 2).toInt();
-
-        // Дефолтные значения пинов
-        if (_wclk == 0) { _wclk = 18; }
-        if (_dout == 0) { _dout = 19; }
-        if (_bclk == 0) { _bclk = 21; }
+        if (jsonRead(parameters, "pins", pins) && pins.length() > 0) {
+            _wclk = parsePinOrDefault(selectFromMarkerToMarker(pins, ",", 0), 15);
+            _dout = parsePinOrDefault(selectFromMarkerToMarker(pins, ",", 1), 16);
+            _bclk = parsePinOrDefault(selectFromMarkerToMarker(pins, ",", 2), 21);
+        }
 
         jsonRead(parameters, "volume", _volume);
 
@@ -197,13 +263,10 @@ public:
     }
 
     ~Radio1334() {
-        _needsStop = true;
-        vTaskDelay(pdMS_TO_TICKS(100));
-        if (_radioTaskHandle != nullptr) {
-            vTaskDelete(_radioTaskHandle);
-            _radioTaskHandle = nullptr;
-        }
-        stopAudioPipeline();
+        _taskRunning = false;
+        requestStop();
+        vTaskDelay(pdMS_TO_TICKS(200));
+        _radioTaskHandle = nullptr;
     }
 
     void loop() override {
@@ -212,7 +275,6 @@ public:
 
     void doByInterval() override {}
 
-    // Управление из UI веб-интерфейса
     void onModuleOrder(String &key, String &value) override {
         std::vector<IoTValue> emptyParams;
         if (key == "play") {
@@ -222,32 +284,38 @@ public:
         } else if (key == "volume") {
             std::vector<IoTValue> params;
             IoTValue val;
+            val.isDecimal = true;
             val.valD = value.toInt();
             params.push_back(val);
             execute("volume", params);
         }
     }
 
-    // Управление из скриптов и сценариев
     IoTValue execute(String command, std::vector<IoTValue> &param) override {
         if (command == "play") {
-            if (param.size() > 0) { _url = param[0].valS; }
-            if (param.size() > 1) { _stationName = param[1].valS; }
+            String nextUrl = _url;
+            String nextStation = _stationName;
+
+            if (param.size() > 0 && param[0].valS.length() > 0) {
+                nextUrl = param[0].valS;
+            }
+            if (param.size() > 1 && param[1].valS.length() > 0) {
+                nextStation = param[1].valS;
+            }
 
             if (WiFi.status() != WL_CONNECTED) {
                 SerialPrint("E", F("Radio1334"), "Connect failed: Wi-Fi not ready!");
                 return {};
             }
 
-            if (_url != "") {
-                _needsStop = false;
-                _needsConnect = true;
-                regEvent(_stationName, "title");
-                regEvent(_stationName, "track");
+            if (nextUrl.length() > 0) {
+                requestConnect(nextUrl, nextStation);
+                regEvent(nextStation, "title");
+                regEvent(nextStation, "track");
             }
         }
         else if (command == "stop") {
-            _needsStop = true;
+            requestStop();
             _stationName = "Stopped";
             regEvent(_stationName, "title");
             regEvent("", "track");
@@ -258,12 +326,13 @@ public:
                 if (newVol > 100) newVol = 100;
                 if (newVol < 0) newVol = 0;
 
-                if (_volume != newVol) {
-                    _volume = newVol;
-                    if (_out) {
-                        float gain = (float)_volume / 100.0f;
-                        _out->SetGain(gain);
-                    }
+                portENTER_CRITICAL(&_mux);
+                bool changed = (_volume != newVol);
+                _volume = newVol;
+                portEXIT_CRITICAL(&_mux);
+
+                if (changed && _out) {
+                    _out->SetGain((float)newVol / 100.0f);
                 }
             }
         }
@@ -271,7 +340,6 @@ public:
     }
 };
 
-// Регистратор для ядра IoTmanager
 void* getAPI_Radio1334(String subtype, String param) {
     if (subtype == F("Radio1334")) {
         return new Radio1334(param);
