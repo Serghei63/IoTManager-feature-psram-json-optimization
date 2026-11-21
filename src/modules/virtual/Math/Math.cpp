@@ -2,6 +2,7 @@
 #include "classes/IoTItem.h"
 #include <ctime>
 #include <cmath>
+#include <cstdlib>
 
 class IoTMath : public IoTItem {
 private:
@@ -98,13 +99,51 @@ public:
             valTmp.valS = String(valTmp.valD);
             return valTmp;
         } 
+        else if (command == "rnd" && param.size() >= 2) {
+            float minVal = param[0].isDecimal ? param[0].valD : param[0].valS.toFloat();
+            float maxVal = param[1].isDecimal ? param[1].valD : param[1].valS.toFloat();
+
+            if (minVal > maxVal) {
+                float tmp = minVal;
+                minVal = maxVal;
+                maxVal = tmp;
+            }
+
+            int decimals = 0;
+            if (param.size() >= 3) {
+                decimals = param[2].isDecimal ? static_cast<int>(param[2].valD) : param[2].valS.toInt();
+            }
+
+            if (decimals < 0) decimals = 0;
+            if (decimals > 6) decimals = 6;
+
+            float scale = std::pow(10.0f, decimals);
+            long long scaledMin = static_cast<long long>(std::ceil(minVal * scale));
+            long long scaledMax = static_cast<long long>(std::floor(maxVal * scale));
+
+            float result = minVal;
+            if (scaledMin <= scaledMax) {
+                uint64_t span = static_cast<uint64_t>(scaledMax - scaledMin) + 1ULL;
+#if defined(ESP32)
+                uint64_t rnd64 = (static_cast<uint64_t>(esp_random()) << 32) | esp_random();
+#else
+                uint64_t rnd64 = static_cast<uint64_t>(rand());
+#endif
+                long long chosen = scaledMin + static_cast<long long>(rnd64 % span);
+                result = static_cast<float>(chosen) / scale;
+            }
+
+            IoTValue valTmp;
+            valTmp.isDecimal = true;
+            valTmp.valD = result;
+            valTmp.valS = String(result, decimals);
+            return valTmp;
+        }
         else if (command == "parse" && param.size() >= 2) {
-            // Безопасное парсирование параметров float / int / bool из чисел и строк
             float val = param[0].isDecimal ? param[0].valD : param[0].valS.toFloat();
             int pos = param[1].isDecimal ? static_cast<int>(param[1].valD) : param[1].valS.toInt();
             bool hideZeros = true;
 
-            // Третий необязательный параметр: 0 = сохранять лидирующие нули, 1 = скрывать (по умолчанию 1)
             if (param.size() >= 3) {
                 hideZeros = param[2].isDecimal ? (param[2].valD != 0) : (param[2].valS != "0");
             }
@@ -117,69 +156,58 @@ public:
             valTmp.valS = String(resultDigit);
             return valTmp;
         }
-        // =========================================================================
-        // РАСЧЁТ ПОЗИЦИИ ЧАСОВОЙ СТРЕЛКИ DWIN (0..59)
-        // Формула: (hours % 12) * 5 + (minutes / 12)
-        // Пример: clockh = math.clock(vouttime, 1)
-        // =========================================================================
-else if (command == "clock" && param.size() >= 1) {
-    int hours = 0;
-    int minutes = 0;
+        else if (command == "clock" && param.size() >= 1) {
+            int hours = 0;
+            int minutes = 0;
 
-    // Если значение передано как число (isDecimal)
-    if (param[0].isDecimal) {
-        int val = static_cast<int>(param[0].valD);
-        // Если время передано в формате 1600 или 16
-        if (val >= 100) {
-            hours = val / 100;
-            minutes = val % 100;
-        } else {
-            hours = val;
-            minutes = 0;
-        }
-    } else {
-        // Если передано как строка "16:00"
-        String timeStr = param[0].valS;
-        timeStr.trim();
-
-        int firstColon = timeStr.indexOf(':');
-        if (firstColon != -1) {
-            hours = timeStr.substring(0, firstColon).toInt();
-            String rest = timeStr.substring(firstColon + 1);
-            int secondColon = rest.indexOf(':');
-            if (secondColon != -1) {
-                minutes = rest.substring(0, secondColon).toInt();
+            if (param[0].isDecimal) {
+                int val = static_cast<int>(param[0].valD);
+                if (val >= 100) {
+                    hours = val / 100;
+                    minutes = val % 100;
+                } else {
+                    hours = val;
+                    minutes = 0;
+                }
             } else {
-                minutes = rest.toInt();
+                String timeStr = param[0].valS;
+                timeStr.trim();
+
+                int firstColon = timeStr.indexOf(':');
+                if (firstColon != -1) {
+                    hours = timeStr.substring(0, firstColon).toInt();
+                    String rest = timeStr.substring(firstColon + 1);
+                    int secondColon = rest.indexOf(':');
+                    if (secondColon != -1) {
+                        minutes = rest.substring(0, secondColon).toInt();
+                    } else {
+                        minutes = rest.toInt();
+                    }
+                } else {
+                    hours = timeStr.toInt();
+                }
             }
-        } else {
-            hours = timeStr.toInt();
+
+            hours = hours % 12;
+
+            int type = 1;
+            if (param.size() >= 2) {
+                type = param[1].isDecimal ? static_cast<int>(param[1].valD) : param[1].valS.toInt();
+            }
+
+            int position = 0;
+            if (type == 1) {
+                position = (hours * 5) + (minutes / 12);
+            } else if (type == 2) {
+                position = minutes % 60;
+            }
+
+            IoTValue valTmp;
+            valTmp.isDecimal = true;
+            valTmp.valD = static_cast<float>(position);
+            valTmp.valS = String(position);
+            return valTmp;
         }
-    }
-
-    // Приводим часы к 12-часовому формату (0..11)
-    hours = hours % 12;
-
-    int type = 1;
-    if (param.size() >= 2) {
-        type = param[1].isDecimal ? static_cast<int>(param[1].valD) : param[1].valS.toInt();
-    }
-
-    int position = 0;
-    if (type == 1) {
-        // Часовая стрелка (0..59)
-        position = (hours * 5) + (minutes / 12); // К слову: лучше /12 для 60 делений, чем /15
-    } else if (type == 2) {
-        // Минутная стрелка (0..59)
-        position = minutes % 60;
-    }
-
-    IoTValue valTmp;
-    valTmp.isDecimal = true;
-    valTmp.valD = static_cast<float>(position);
-    valTmp.valS = String(position);
-    return valTmp;
-}
         else if (command == "convertTime" && param.size() == 5) {
             float day = param[0].isDecimal ? param[0].valD : param[0].valS.toFloat();
             float mon = param[1].isDecimal ? param[1].valD : param[1].valS.toFloat();
