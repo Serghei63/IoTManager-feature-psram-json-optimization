@@ -1,11 +1,3 @@
-/******************************************************************
-  Used Adafruit ADS1X15 Driver (16-bit Differential or Single-Ended ADCs with PGA and Comparator)
-  Support for ADS1015/1115
-  https://github.com/adafruit/Adafruit_ADS1X15
-
-  adapted for version 4 @Serghei63
- ******************************************************************/
-
 #include "Global.h"
 #include "classes/IoTItem.h"
 
@@ -36,7 +28,9 @@ class Ads1115 : public IoTItem {
 
         String gain;
         jsonRead(parameters, "gain", gain);
-        if (gain == "1x")
+        if (gain == "2/3x")
+            ads.setGain(GAIN_TWOTHIRDS);
+        else if (gain == "1x")
             ads.setGain(GAIN_ONE);
         else if (gain == "2x")
             ads.setGain(GAIN_TWO);
