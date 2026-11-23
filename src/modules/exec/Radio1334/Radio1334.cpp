@@ -112,6 +112,13 @@ private:
         return s;
     }
 
+    static bool isGarbageMetadata(const String& title) {
+        if (title.length() == 0 || title == "0") return true;
+        if (title.startsWith("{") || title.startsWith("[")) return true;
+        if (title.indexOf("\"errorCode\"") != -1 || title.indexOf("\"status\"") != -1) return true;
+        return false;
+    }
+
     void onMetadataReceived(const char* type, bool isUnicode, const char* string) {
         (void)isUnicode;
         if (!string || !string[0]) return;
@@ -121,7 +128,7 @@ private:
 
         if (typeStr.equalsIgnoreCase("StreamTitle") || typeStr.length() == 0 || strstr(string, "StreamTitle=") != nullptr) {
             String title = extractStreamTitle(string);
-            if (title.length() == 0) return;
+            if (isGarbageMetadata(title)) return;
 
             portENTER_CRITICAL(&_mux);
             if (title != _currentTrack) {
