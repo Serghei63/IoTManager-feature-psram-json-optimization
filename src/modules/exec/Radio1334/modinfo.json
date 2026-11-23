@@ -26,7 +26,7 @@
         "authorGit": "",
         "specialThanks": "",
         "moduleName": "Radio1334",
-        "moduleVersion": "1.0",
+        "moduleVersion": "2.1",
         "usedRam": {
             "esp32_4mb": 15,
             "esp8266_4mb": 15
@@ -43,7 +43,7 @@
         "funcInfo": [
             {
                 "name": "play",
-                "descr": "Проиграть трек по URL . Пример: play(\"http://pub0201.101.ru:8000/stream/pro/aac/64/192\", \"Рок ФМ\")",
+                "descr": "Проиграть трек по URL . Пример: play(\"http://pub0201.101.ru:8000/stream/pro/aac/64/192\", \"Golden'70\")",
                 "params": [
                     "URL трека", "Название Станции"
                 ]

@@ -112,13 +112,6 @@ private:
         return s;
     }
 
-    static bool isGarbageMetadata(const String& title) {
-        if (title.length() == 0 || title == "0") return true;
-        if (title.startsWith("{") || title.startsWith("[")) return true;
-        if (title.indexOf("\"errorCode\"") != -1 || title.indexOf("\"status\"") != -1) return true;
-        return false;
-    }
-
     void onMetadataReceived(const char* type, bool isUnicode, const char* string) {
         (void)isUnicode;
         if (!string || !string[0]) return;
@@ -128,7 +121,7 @@ private:
 
         if (typeStr.equalsIgnoreCase("StreamTitle") || typeStr.length() == 0 || strstr(string, "StreamTitle=") != nullptr) {
             String title = extractStreamTitle(string);
-            if (isGarbageMetadata(title)) return;
+            if (title.length() == 0) return;
 
             portENTER_CRITICAL(&_mux);
             if (title != _currentTrack) {
@@ -653,12 +646,9 @@ void* getAPI_Radio1334(String subtype, String param) {
     }
     return nullptr;
 }
+
 /*
-myradio.play("http://stream.com/rock.mp3", "Рок ФМ") — включит поток и в текстовом виджете сразу загорится «Рок ФМ».
+    radio.play("http://193.33.170.218:8000/RoyalTrance", "Trance") — включит поток и в текстовом виджете сразу загорится «Trance».
 
-myradio.play("http://stream.com/jazz.mp3", "Радио Джаз") — переключит на джаз с соответствующей надписью.
-
-myradio.stop() — остановит воспроизведение, а на экране появится «Stopped».
-
-
+    radio.stop() — остановит воспроизведение, а на экране появится «Stopped».
 */
