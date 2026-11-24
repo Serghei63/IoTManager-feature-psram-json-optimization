@@ -1,0 +1,48 @@
+{
+    "mark": "iotm",
+    "config": [
+        {
+            "global": 0,
+            "type": "Writing",
+            "subtype": "Blink",
+            "id": "blink",
+            "widget": "toggle",
+            "page": "Кнопки",
+            "descr": "Blink",
+            "int": 0,
+            "inverse": 0,
+            "indication": 1,
+            "val": 0,
+            "pwmChannelMask": 0
+        },
+        {
+            "global": 0,
+            "type": "Reading",
+            "subtype": "VButton",
+            "id": "testBlink",
+            "needSave": 0,
+            "widget": "toggle",
+            "page": "Кнопки",
+            "descr": "Test Blink",
+            "int": 0,
+            "val": 0
+        },
+        {
+            "global": 0,
+            "type": "Reading",
+            "subtype": "VButton",
+            "id": "testSmooth",
+            "needSave": 0,
+            "widget": "toggle",
+            "page": "Кнопки",
+            "descr": "Test Smooth",
+            "int": 0,
+            "val": 0
+        }
+    ]
+}
+
+scenario=>
+if testBlink == 1 then {blink.duration(15,1000,50,10000); blink.times(4,200,25,20); blink.random(5,2,80,50,10000,40); blink.morze(12,"HELLO WORLD",20); blink.morze(13,"ПРИВЕТ МИР",15); testBlink = 0;}
+
+if testSmooth == 1 then {blink.smooth(15,3000,10,100,20000); blink.smoothRandom(4,0.5,80,20,100,60000); testSmooth = 0;}
