@@ -38,10 +38,15 @@ private:
     String _url = "";
     String _stationName = "Stopped";
 
-    // Буферы ICY-метаданных (обновляются в колбэке потока, отправляются вне критической секции)
+    // Буферы ICY-метаданных (заполняются в колбэке потока, публикуются в основном loop())
     String _currentTrack = "";
     String _pendingTrack = "";
     volatile bool _trackChanged = false;
+
+    // Отложенная публикация в основном loop() (название станции / "Stopped" / трек)
+    String _mainPendingValue = "";
+    String _mainPendingInfo = "";
+    volatile bool _mainHasPending = false;
 
     // Компоненты ESP8266Audio
     AudioFileSourceICYStream* _file     = nullptr;
@@ -147,7 +152,8 @@ private:
         }
     }
 
-    void flushPendingTrackEvent() {
+    // Вызывается только из основного loop() — безопасно обновляет value, WS и события
+    void publishTrackInMainLoop() {
         String trackToSend;
         bool hasUpdate = false;
 
@@ -160,9 +166,40 @@ private:
         portEXIT_CRITICAL(&_mux);
 
         if (hasUpdate) {
-            Serial.printf("[UDA1334 Task] ICY Track: %s\n", trackToSend.c_str());
-            regEvent(trackToSend, "track");
+            Serial.printf("[Radio1334] ICY Track -> Event & WS: %s\n", trackToSend.c_str());
+            value.isDecimal = false;
+            value.valS = trackToSend;
+            regEvent(trackToSend, "track", false, true);
         }
+    }
+
+    void publishMainPendingIfAny() {
+        String valToSend;
+        String infoToSend;
+        bool hasMsg = false;
+
+        portENTER_CRITICAL(&_mux);
+        if (_mainHasPending) {
+            valToSend = _mainPendingValue;
+            infoToSend = _mainPendingInfo;
+            _mainHasPending = false;
+            hasMsg = true;
+        }
+        portEXIT_CRITICAL(&_mux);
+
+        if (hasMsg) {
+            value.isDecimal = false;
+            value.valS = valToSend;
+            regEvent(valToSend, infoToSend, false, true);
+        }
+    }
+
+    void queueMainEvent(const String& val, const String& info) {
+        portENTER_CRITICAL(&_mux);
+        _mainPendingValue = val;
+        _mainPendingInfo = info;
+        _mainHasPending = true;
+        portEXIT_CRITICAL(&_mux);
     }
 
     void requestConnect(const String& url, const String& station) {
@@ -443,8 +480,6 @@ private:
         }
         unlockPipeline();
 
-        flushPendingTrackEvent();
-
         if (startedOk) {
             portENTER_CRITICAL(&_mux);
             _retryDelayMs = 2000;
@@ -500,8 +535,7 @@ private:
             }
             instance->unlockPipeline();
 
-            // Отправляем событие нового трека в виджет вне мьютекса аудиопотока
-            instance->flushPendingTrackEvent();
+            // В задаче декодера regEvent НЕ вызываем — флаг _trackChanged подхватит loop() основного потока
 
             if (needReconnect) {
                 instance->scheduleRetryWithBackoff();
@@ -574,6 +608,8 @@ public:
 
     void loop() override {
         IoTItem::loop();
+        publishMainPendingIfAny();
+        publishTrackInMainLoop();
     }
 
     void doByInterval() override {}
@@ -613,15 +649,17 @@ public:
 
             if (nextUrl.length() > 0) {
                 requestConnect(nextUrl, nextStation);
-                regEvent(nextStation, "title");
-                regEvent(nextStation, "track");
+                value.isDecimal = false;
+                value.valS = nextStation;
+                regEvent(nextStation, "title", false, true);
             }
         }
         else if (command == "stop") {
             requestStop();
             _stationName = "Stopped";
-            regEvent(_stationName, "title");
-            regEvent(_stationName, "track");
+            value.isDecimal = false;
+            value.valS = _stationName;
+            regEvent(_stationName, "title", false, true);
         }
         else if (command == "volume") {
             if (param.size() > 0) {
