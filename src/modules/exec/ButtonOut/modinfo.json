@@ -13,7 +13,13 @@
             "descr": "Освещение",
             "int": 0,
             "inv": 0,
-            "pin": 2
+            "pin": 2,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "needSave": [0, 1],
+                "inv": [0, 1]
+            }
         }
     ],
     "about": {

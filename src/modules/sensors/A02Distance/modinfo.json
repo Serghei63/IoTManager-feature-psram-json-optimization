@@ -2,6 +2,7 @@
     "menuSection": "sensors",
     "configItem": [
         {
+            "global": 0,
             "name": "A02 Дальность",
             "type": "Reading",
             "subtype": "A02Distance",
@@ -14,7 +15,14 @@
             "tx": 17,
             "rx": 16,
             "line": 2,
-            "speed": 9600
+            "speed": 9600,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "round": [0, 1, 2, 3],
+                "line": [0, 1, 2],
+                "speed": [9600, 19200, 38400, 57600, 115200]
+            }
         }
     ],
     "about": {
@@ -31,7 +39,9 @@
             "tx": "TX пин",
             "rx": "RX пин",
             "speed": "Скорость UART",
-            "line": "Актуально только для ESP32: номер линии hardUART. =2 rx=16 tx=17, для SoftwarwSerial в ESP32 line = -1"
+            "line": "Актуально только для ESP32: номер линии hardUART. =2 rx=16 tx=17, для SoftwarwSerial в ESP32 line = -1",
+            "order": "Позиция виджета в списке. чем меньше - тем выше в карточке",
+            "options": "Перечень элементов управления для выбора в выпадающем списке (для полей: global, round, line, speed)"
         },
         "title": "A0221AU, A02YYUW Ультразвуковой датчик дальности"
     },

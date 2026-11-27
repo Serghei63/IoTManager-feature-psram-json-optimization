@@ -11,9 +11,14 @@
             "page": "Таймеры",
             "descr": "Будильник",
             "int": 1,
-            "val": "*/15 * * * * *",
+            "val": "*/60 * * * * *",
             "formatNextAlarm": "%H:%M:%S",
-            "needSave": 0
+            "needSave": 0,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1]
+            }
         }
     ],
     "about": {

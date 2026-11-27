@@ -14,7 +14,15 @@
             "addr": "0x39",
             "gain": 4,
             "led": 100,
-            "debug": 1
+            "debug": 1,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "debug": [0, 1],
+                "led": [12, 25, 50, 100],
+                "gain": [1, 2, 4],
+                "global": [0, 1]
+            }
         }
     ],
     "about": {

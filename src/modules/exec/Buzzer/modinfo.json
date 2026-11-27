@@ -21,7 +21,11 @@
             "transpose": 0,
             "cycle": 0,
             "indication": 1,
-            "val": 0
+            "val": 0,
+            "order": 1,
+            "options": {
+                "global": [0, 1]
+            }
         }
     ],
     "about": {

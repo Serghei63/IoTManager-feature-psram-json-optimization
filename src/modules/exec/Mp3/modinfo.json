@@ -12,7 +12,11 @@
             "descr": "Status",
             "int": 1,
             "pins": "26,25",
-            "volume": 20
+            "volume": 20,
+            "order": 1,
+            "options": {
+                "global": [0, 1]
+            }
         }
     ],
     "about": {

@@ -15,7 +15,14 @@
             "ticker": 1,
             "repeat": 1,
             "needSave": 0,
-            "num": 1
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "ticker": [0, 1],
+                "repeat": [0, 1]
+            }               
+
         }
     ],
     "about": {

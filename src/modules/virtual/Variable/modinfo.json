@@ -16,7 +16,13 @@
             "map": "1024,1024,1,100",
             "plus": 0,
             "multiply": 1,
-            "round": 0
+            "round": 0,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         },
         {
             "global": 0,
@@ -29,7 +35,12 @@
             "page": "Ввод",
             "descr": "Введите время",
             "int": "0",
-            "val": "02:00"
+            "val": "02:00",
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1]
+            }
         },
         {
             "global": 0,
@@ -42,7 +53,12 @@
             "page": "Ввод",
             "descr": "Введите дату",
             "int": "0",
-            "val": "24.05.2022"
+            "val": "24.05.2022",
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1]
+            }            
         },
         {
             "global": 0,
@@ -55,7 +71,12 @@
             "page": "Ввод",
             "descr": "Введите текст",
             "int": "0",
-            "val": "текст"
+            "val": "текст",
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1]
+            }            
         },
         {
             "global": 0,
@@ -72,7 +93,13 @@
             "map": "1024,1024,1,100",
             "plus": 0,
             "multiply": 1,
-            "round": 0
+            "round": 0,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }            
         }
     ],
     "about": {

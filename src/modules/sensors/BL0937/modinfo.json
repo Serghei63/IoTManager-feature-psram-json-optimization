@@ -10,8 +10,14 @@
             "widget": "anydataVlt",
             "page": "BL0937",
             "descr": "Напряжение",
+            "needSave": 0,
             "int": 15,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         },
         {
             "global": 0,
@@ -22,8 +28,14 @@
             "widget": "anydataAmp",
             "page": "BL0937",
             "descr": "Сила тока",
+            "needSave": 0,
             "int": 15,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         },
         {
             "global": 0,
@@ -35,7 +47,12 @@
             "page": "BL0937",
             "descr": "Мощность",
             "int": 15,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         },
         {
             "global": 0,
@@ -47,7 +64,12 @@
             "page": "BL0937",
             "descr": "Реакт.Мощность",
             "int": 15,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         },
         {
             "global": 0,
@@ -59,7 +81,12 @@
             "page": "BL0937",
             "descr": "Актив.Мощность",
             "int": 15,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         },
         {
             "global": 0,
@@ -71,7 +98,12 @@
             "page": "BL0937",
             "descr": "Энергия",
             "int": 15,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         },
         {
             "global": 0,
@@ -92,7 +124,11 @@
             "SEL_GPIO": 12,
             "kfV": 0,
             "kfA": 0,
-            "kfW": 0
+            "kfW": 0,
+            "order": 1,
+            "options": {
+                "global": [0, 1]
+            }
         }
     ],
     "about": {
@@ -119,7 +155,8 @@
             "SEL_GPIO": "пин SEL",
             "kfV": "Коэффициент корректировки напряжение, указать после калибровки",
             "kfA": "Коэффициент корректировки тока, указать после калибровки",
-            "kfW": "Коэффициент корректировки мощности, указать после калибровки"
+            "kfW": "Коэффициент корректировки мощности, указать после калибровки",
+            "options": "Перечень элементов управления для выбора в выпадающем списке (для полей: needSave, global, round)"
         },
         "funcInfo": [
             {   

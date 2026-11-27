@@ -10,10 +10,18 @@
             "widget": "anydataTmp",
             "page": "Сенсоры",
             "descr": "AHTXX Температура",
+            "needSave": 0,
             "int": 15,
             "addr": "0x38",
             "shtType": 1,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3],
+                "shtType": [0, 1]
+            }
         },
         {
             "global": 0,
@@ -24,10 +32,18 @@
             "widget": "anydataHum",
             "page": "Сенсоры",
             "descr": "AHTXX Влажность",
+            "needSave": 0,
             "int": 15,
             "addr": "0x38",
             "shtType": 1,
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3],
+                "shtType": [0, 1]
+            }
         }
     ],
     "about": {
@@ -48,10 +64,12 @@
         "title": "Сенсор температуры и влажности AHTXX",
         "moduleDesc": "Позволяет получить температуру и влажность с AhtXX.",
         "propInfo": {
-            "pin": "GPIO номер, к которому подключен датчик.",
             "addr": "Адрес датчика на шине, обычно 0x38.",
             "int": "Количество секунд между опросами датчика.",
-            "shtType": "Модель датчика. 0 - AHT1x, 1 - AHT2x"
+            "shtType": "Модель датчика. 0 - AHT1x, 1 - AHT2x",
+            "round": "Количество знаков после запятой",
+            "order": "Позиция виджета в списке. чем меньше - тем выше в карточке",
+            "options": "Перечень элементов управления для выбора в выпадающем списке (для полей: global, round, shtType)"
         }
     },
     "defActive": false,

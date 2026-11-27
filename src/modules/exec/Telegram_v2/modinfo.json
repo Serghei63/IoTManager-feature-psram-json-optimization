@@ -16,7 +16,16 @@
         "autos": 1,
         "receiveMsg": 1,
         "textMode":"0",
-        "OTA": 0
+        "OTA": 0,
+        "order": 1,
+        "options": {
+            "global": [0, 1],
+            "autos": [0, 1],
+            "receiveMsg": [0, 1],
+            "textMode": [0 ,1],
+            "OTA": [0, 1]
+        }
+
     }],
     
     "about": {

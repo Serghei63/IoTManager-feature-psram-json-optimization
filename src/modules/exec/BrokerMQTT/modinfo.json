@@ -20,9 +20,14 @@
       "srvUser": "rise",
       "srvPass": "3hostel3",
       "srvPort": 1883,
-      "debug": 1
+      "debug": 1,
+      "order": 1,
+      "options": {
+          "global": [0, 1],
+          "debug": [0, 1]
     }
-  ],
+  }
+],
   "about": {
     "authorName": "Mikhail Bubnov",
     "authorContact": "https://t.me/Mit4bmw",

@@ -16,98 +16,45 @@
         "page": "Таймеры",
         "descr": "Будильник",
         "int": 1,
-        "val": "*/15 * * * * *",
+        "val": "*/60 * * * * *",
         "formatNextAlarm": "%H:%M:%S",
         "needSave": 0,
+        "order": 1,
+        "options": {
+            "needSave": [
+                0,
+                1
+            ],
+            "global": [
+                0,
+                1
+            ]
+        },
         "num": 1,
         "moduleName": "Cron"
     },
     {
         "global": 0,
-        "name": "2. График",
-        "type": "Writing",
-        "subtype": "Loging",
-        "id": "log",
-        "widget": "chart2",
-        "page": "Графики",
-        "descr": "Температура",
-        "num": 2,
-        "int": 5,
-        "logid": "t",
-        "daysSave": 5,
-        "daysShow": 0,
-        "points": 300,
-        "moduleName": "Loging"
-    },
-    {
-        "global": 0,
-        "name": "3. График по событию",
-        "type": "Writing",
-        "subtype": "Loging",
-        "id": "log",
-        "widget": "chart2",
-        "page": "Графики",
-        "descr": "Температура",
-        "int": 0,
-        "num": 3,
-        "daysSave": 5,
-        "daysShow": 0,
-        "points": 300,
-        "moduleName": "Loging"
-    },
-    {
-        "global": 0,
-        "name": "4. График дневного расхода",
-        "type": "Writing",
-        "subtype": "LogingDaily",
-        "id": "log",
-        "widget": "chart3",
-        "page": "Графики",
-        "descr": "Температура",
-        "num": 4,
-        "int": 1,
-        "logid": "t",
-        "points": 365,
-        "telegram": 0,
-        "test": 0,
-        "btn-defvalue": 0,
-        "btn-reset": "nil",
-        "moduleName": "LogingDaily"
-    },
-    {
-        "global": 0,
-        "name": "5. График часового расхода",
-        "type": "Writing",
-        "subtype": "LogingHourly",
-        "id": "logh",
-        "widget": "chart3",
-        "page": "Графики",
-        "descr": "Расход в час",
-        "num": 5,
-        "int": 1,
-        "logid": "",
-        "points": 24,
-        "telegram": 0,
-        "test": 0,
-        "btn-defvalue": 0,
-        "btn-reset": "nil",
-        "moduleName": "LogingHourly"
-    },
-    {
-        "global": 0,
-        "name": "6. Math library",
+        "name": "2. Math library",
         "type": "Reading",
         "subtype": "IoTMath",
         "id": "math",
         "widget": "anydataValue",
         "page": "Математика",
         "descr": "",
-        "num": 6,
+        "order": 1,
+        "options": {
+            "global": [
+                0,
+                1
+            ]
+        },
+        "num": 2,
         "moduleName": "IoTMath"
     },
     {
         "global": 0,
-        "name": "7. Время работы",
+        "name": "3. Время работы",
         "type": "Writing",
         "subtype": "Runtime",
         "id": "runtime18",
@@ -117,12 +64,23 @@
         "int": 60,
         "target": "rel4",
         "needSave": 1,
-        "num": 7,
+        "order": 1,
+        "options": {
+            "global": [
+                0,
+                1
+            ],
+            "needSave": [
+                0,
+                1
+            ]
+        },
+        "num": 3,
         "moduleName": "Runtime"
     },
     {
         "global": 0,
-        "name": "8. Таймер",
+        "name": "4. Таймер",
         "type": "Writing",
         "subtype": "Timer",
         "id": "timer",
@@ -134,27 +92,53 @@
         "ticker": 1,
         "repeat": 1,
         "needSave": 0,
-        "num": 8,
+        "order": 1,
+        "options": {
+            "needSave": [
+                0,
+                1
+            ],
+            "global": [
+                0,
+                1
+            ],
+            "ticker": [
+                0,
+                1
+            ],
+            "repeat": [
+                0,
+                1
+            ]
+        },
+        "num": 4,
         "moduleName": "Timer"
     },
     {
         "global": 0,
-        "name": "9. Свой сервер обновлений",
+        "name": "5. Свой сервер обновлений",
         "type": "Reading",
         "subtype": "UpdateServer",
         "id": "UpdateServer",
         "widget": "",
         "page": "",
         "descr": "",
-        "btn-startUpdateAll": "http://192.168.11.112/iotm/esp8266_4mb/400",
-        "btn-startUpdateFS": "http://192.168.11.112/iotm/esp8266_4mb/400",
-        "btn-startUpdateFW": "http://192.168.11.112/iotm/esp8266_4mb/400",
-        "num": 9,
+        "btn-startUpdateAll": "http://192.168.2.110/iotm/esp32s3_n16r8/400",
+        "btn-startUpdateFS": "http://192.168.2.110/iotm/esp32s3_n16r8/400",
+        "btn-startUpdateFW": "http://192.168.2.110/iotm/esp32s3_n16r8/400",
+        "order": 1,
+        "options": {
+            "global": [
+                0,
+                1
+            ]
+        },
+        "num": 5,
         "moduleName": "UpdateServer"
     },
     {
         "global": 0,
-        "name": "10. Окно ввода числа (переменная)",
+        "name": "6. Окно ввода числа (переменная)",
         "type": "Reading",
         "subtype": "Variable",
         "id": "value",
@@ -168,12 +152,29 @@
         "plus": 0,
         "multiply": 1,
         "round": 0,
-        "num": 10,
+        "order": 1,
+        "options": {
+            "needSave": [
+                0,
+                1
+            ],
+            "global": [
+                0,
+                1
+            ],
+            "round": [
+                0,
+                1,
+                2,
+                3
+            ]
+        },
+        "num": 6,
         "moduleName": "Variable"
     },
     {
         "global": 0,
-        "name": "11. Окно ввода времени",
+        "name": "7. Окно ввода времени",
         "type": "Reading",
         "subtype": "Variable",
         "id": "time",
@@ -183,12 +184,23 @@
         "descr": "Введите время",
         "int": "0",
         "val": "02:00",
-        "num": 11,
+        "order": 1,
+        "options": {
+            "needSave": [
+                0,
+                1
+            ],
+            "global": [
+                0,
+                1
+            ]
+        },
+        "num": 7,
         "moduleName": "Variable"
     },
     {
         "global": 0,
-        "name": "12. Окно ввода даты",
+        "name": "8. Окно ввода даты",
         "type": "Reading",
         "subtype": "Variable",
         "id": "time",
@@ -198,12 +210,23 @@
         "descr": "Введите дату",
         "int": "0",
         "val": "24.05.2022",
-        "num": 12,
+        "order": 1,
+        "options": {
+            "needSave": [
+                0,
+                1
+            ],
+            "global": [
+                0,
+                1
+            ]
+        },
+        "num": 8,
         "moduleName": "Variable"
     },
     {
         "global": 0,
-        "name": "13. Окно ввода текста",
+        "name": "9. Окно ввода текста",
         "type": "Reading",
         "subtype": "Variable",
         "id": "txt",
@@ -213,12 +236,23 @@
         "descr": "Введите текст",
         "int": "0",
         "val": "текст",
-        "num": 13,
+        "order": 1,
+        "options": {
+            "needSave": [
+                0,
+                1
+            ],
+            "global": [
+                0,
+                1
+            ]
+        },
+        "num": 9,
         "moduleName": "Variable"
     },
     {
         "global": 0,
-        "name": "14. Вывод значения",
+        "name": "10. Вывод значения",
         "type": "Reading",
         "subtype": "Variable",
         "id": "vout",
@@ -232,12 +266,29 @@
         "plus": 0,
         "multiply": 1,
         "round": 0,
-        "num": 14,
+        "order": 1,
+        "options": {
+            "needSave": [
+                0,
+                1
+            ],
+            "global": [
+                0,
+                1
+            ],
+            "round": [
+                0,
+                1,
+                2,
+                3
+            ]
+        },
+        "num": 10,
         "moduleName": "Variable"
     },
     {
         "global": 0,
-        "name": "15. Виртуальная кнопка",
+        "name": "11. Виртуальная кнопка",
         "type": "Reading",
         "subtype": "VButton",
         "id": "vbtn",
@@ -247,92 +298,8 @@
         "descr": "Кнопка",
         "int": "0",
         "val": "0",
-        "num": 15,
-        "moduleName": "VButton"
-    },
-    {
-        "header": "sensors"
-    },
-    {
-        "global": 0,
-        "name": "16. ModbusClient",
-        "type": "Reading",
-        "subtype": "mbClient",
-        "id": "mbClient",
-        "widget": "anydata",
-        "page": "ModbusGroup",
-        "descr": "Ошибки на шине RS-485",
-        "RX": 18,
-        "TX": 19,
-        "DIR_PIN": 0,
-        "baud": 9600,
-        "protocol": "SERIAL_8N1",
-        "debug": 0,
-        "options": {
-            "baud": [
-                "9600",
-                "115200"
-            ],
-            "protocol": [
-                "SERIAL_8N1",
-                "SERIAL_8N2"
-            ],
-            "debug": [
-                0,
-                1
-            ]
-        },
-        "num": 16,
-        "moduleName": "ModbusGroup"
-    },
-    {
-        "global": 0,
-        "name": "17. ModbusPoll",
-        "type": "Reading",
-        "subtype": "mbPoll",
-        "id": "meter_poll",
-        "widget": "anydataTmp",
-        "page": "ModbusGroup",
-        "descr": "Групповой опрос устройств",
-        "int": 2,
-        "addr": 1,
-        "func": "0x03",
-        "reg": "0x0000",
-        "count": 6,
-        "num": 17,
-        "moduleName": "ModbusGroup"
-    },
-    {
-        "global": 0,
-        "name": "18. ModbusSens",
-        "type": "Reading",
-        "subtype": "mbSens",
-        "id": "voltage",
-        "widget": "anydataTmp",
-        "page": "ModbusGroup",
-        "descr": "Виртуальный сенсор",
-        "parent": "meter_poll",
-        "offset": 0,
-        "count": 1,
-        "isFloat": 0,
-        "div": 10,
-        "plus": 0,
-        "round": 1,
-        "onlyOnChange": 0,
         "order": 1,
         "options": {
-            "div": [
-                1,
-                10,
-                100,
-                1000
-            ],
-            "round": [
-                0,
-                1,
-                2,
-                3
-            ],
             "needSave": [
                 0,
                 1
@@ -340,25 +307,20 @@
             "global": [
                 0,
                 1
-            ],
-            "onlyOnChange": [
-                0,
-                1
-            ],
-            "isFloat": [
-                0,
-                1
             ]
         },
-        "num": 18,
-        "moduleName": "ModbusGroup"
+        "num": 11,
+        "moduleName": "VButton"
+    },
+    {
+        "header": "sensors"
     },
     {
         "header": "executive_devices"
     },
     {
         "global": 0,
-        "name": "19. Кнопка подключенная к пину",
+        "name": "12. Кнопка подключенная к пину",
         "type": "Writing",
         "subtype": "ButtonIn",
         "id": "btn",
@@ -373,12 +335,40 @@
         "debounceDelay": 50,
         "fixState": 0,
         "inv": 0,
-        "num": 19,
+        "order": 1,
+        "options": {
+            "global": [
+                0,
+                1
+            ],
+            "needSave": [
+                0,
+                1
+            ],
+            "execLevel": [
+                0,
+                1
+            ],
+            "pinMode": [
+                "INPUT",
+                "INPUT_PULLUP",
+                "INPUT_PULLDOWN"
+            ],
+            "fixState": [
+                0,
+                1
+            ],
+            "inv": [
+                0,
+                1
+            ]
+        },
+        "num": 12,
         "moduleName": "ButtonIn"
     },
     {
         "global": 0,
-        "name": "20. Управление пином",
+        "name": "13. Управление пином",
         "type": "Writing",
         "subtype": "ButtonOut",
         "needSave": 0,
@@ -389,12 +379,53 @@
         "int": 0,
         "inv": 0,
         "pin": 2,
-        "num": 20,
+        "order": 1,
+        "options": {
+            "global": [
+                0,
+                1
+            ],
+            "needSave": [
+                0,
+                1
+            ],
+            "inv": [
+                0,
+                1
+            ]
+        },
+        "num": 13,
         "moduleName": "ButtonOut"
     },
     {
         "global": 0,
-        "name": "21. Телеграм-Бот v2",
+        "name": "14. I2S Radio",
+        "type": "Reading",
+        "subtype": "Radio1334",
+        "id": "radio",
+        "needSave": 1,
+        "widget": "anydataDef",
+        "page": "Radio",
+        "descr": "Radio",
+        "int": 1,
+        "pins": "15,16,21",
+        "order": 1,
+        "options": {
+            "global": [
+                0,
+                1
+            ],
+            "needSave": [
+                0,
+                1
+            ]
+        },
+        "num": 14,
+        "moduleName": "Radio1334"
+    },
+    {
+        "global": 0,
+        "name": "15. Телеграм-Бот v2",
         "type": "Writing",
         "subtype": "Telegram_v2",
         "id": "tg",
@@ -408,7 +439,30 @@
         "receiveMsg": 1,
         "textMode": "0",
         "OTA": 0,
-        "num": 21,
+        "order": 1,
+        "options": {
+            "global": [
+                0,
+                1
+            ],
+            "autos": [
+                0,
+                1
+            ],
+            "receiveMsg": [
+                0,
+                1
+            ],
+            "textMode": [
+                0,
+                1
+            ],
+            "OTA": [
+                0,
+                1
+            ]
+        },
+        "num": 15,
         "moduleName": "Telegram_v2"
     },
     {

@@ -15,7 +15,13 @@
             "round": 0,
             "step": 1,
             "stepOnPress": 5,
-            "pins": "4,5,2"
+            "pins": "4,5,2",
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "needSave": [0, 1],
+                "round": [0, 1, 2, 3]
+            }
         }
     ],
     "about": {

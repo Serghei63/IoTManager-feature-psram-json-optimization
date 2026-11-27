@@ -1,7 +1,7 @@
 {
     "iotmSettings": {
-        "name": "ESPs3_modbus",
-        "apssid": "ESP_modbus",
+        "name": "ESPs3_Radio",
+        "apssid": "ESP_Radio",
         "appass": "",
         "wifirep_apchanel": 7,
         "wifirep_apip": "192.168.4.1",
@@ -182,7 +182,7 @@
             },
             {
                 "path": "src/modules/virtual/Loging",
-                "active": true
+                "active": false
             },
             {
                 "path": "src/modules/virtual/Loging2",
@@ -194,11 +194,11 @@
             },
             {
                 "path": "src/modules/virtual/LogingDaily",
-                "active": true
+                "active": false
             },
             {
                 "path": "src/modules/virtual/LogingHourly",
-                "active": true
+                "active": false
             },
             {
                 "path": "src/modules/virtual/Lognew2",
@@ -271,6 +271,10 @@
         ],
         "sensors": [
             {
+                "path": "src/modules/exec/PressureRelay",
+                "active": false
+            },
+            {
                 "path": "src/modules/sensors/A02Distance",
                 "active": false
             },
@@ -284,6 +288,10 @@
             },
             {
                 "path": "src/modules/sensors/AhtXX",
+                "active": false
+            },
+            {
+                "path": "src/modules/sensors/Ais",
                 "active": false
             },
             {
@@ -428,7 +436,7 @@
             },
             {
                 "path": "src/modules/sensors/ModbusGroup",
-                "active": true
+                "active": false
             },
             {
                 "path": "src/modules/sensors/ModbusRTUasync",
@@ -553,6 +561,10 @@
                 "active": false
             },
             {
+                "path": "src/modules/exec/HC59543",
+                "active": false
+            },
+            {
                 "path": "src/modules/exec/HttpGet",
                 "active": false
             },
@@ -597,6 +609,10 @@
                 "active": false
             },
             {
+                "path": "src/modules/exec/OpenThermMonitor",
+                "active": false
+            },
+            {
                 "path": "src/modules/exec/Pcf8574",
                 "active": false
             },
@@ -614,7 +630,7 @@
             },
             {
                 "path": "src/modules/exec/Radio1334",
-                "active": false
+                "active": true
             },
             {
                 "path": "src/modules/exec/SDcard",

@@ -10,9 +10,17 @@
             "widget": "anydataTmp",
             "page": "Сенсоры",
             "descr": "Температура",
+            "needSave": 0,
             "int": 15,
             "addr": "0x77",
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3],
+                "addr": ["0x76", "0x77"]
+            }
         },
         {
             "global": 0,
@@ -23,9 +31,17 @@
             "widget": "anydataMm",
             "page": "Сенсоры",
             "descr": "Давление",
+            "needSave": 0,
             "int": 15,
             "addr": "0x77",
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3],
+                "addr": ["0x76", "0x77"]
+            }
         },
         {
             "global": 0,
@@ -36,9 +52,17 @@
             "widget": "anydataHum",
             "page": "Сенсоры",
             "descr": "Влажность",
+            "needSave": 0,
             "int": 15,
             "addr": "0x77",
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3],
+                "addr": ["0x76", "0x77"]
+            }
         },
         {
             "global": 0,
@@ -49,9 +73,17 @@
             "widget": "anydataTmp",
             "page": "Сенсоры",
             "descr": "Точка росы",
+            "needSave": 0,
             "int": 15,
             "addr": "0x77",
-            "round": 1
+            "round": 1,
+            "order": 1,
+            "options": {
+                "needSave": [0, 1],
+                "global": [0, 1],
+                "round": [0, 1, 2, 3],
+                "addr": ["0x76", "0x77"]
+            }
         }
     ],
     "about": {
@@ -75,7 +107,9 @@
         "moduleDesc": "Позволяет получить значения температуры, давления, влажности и точки росы с Bme280.",
         "propInfo": {
             "addr": "Адрес датчика на шине, обычно 0x77. Для стабильности надо пин SDO притянуть к 3.3В. Если пин SDO притянуть к GND то адрес будет 0х76",
-            "int": "Количество секунд между опросами датчика."
+            "int": "Количество секунд между опросами датчика.",
+            "needSave": "1 — сохранить показания в энергонезависимую память, 0 — не сохранять",
+            "options": "Перечень элементов управления для выбора в выпадающем списке (для полей: needSave, global, round, addr)"
         }
     },
     "defActive": false,

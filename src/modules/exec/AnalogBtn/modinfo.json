@@ -12,7 +12,11 @@
             "descr": "Освещение",
             "pin": 34,
             "aValue": -1,
-            "delta": 50
+            "delta": 50,
+            "order": 1,
+            "options": {
+                "global": [0, 1]
+            }
         }
     ],
     "about": {

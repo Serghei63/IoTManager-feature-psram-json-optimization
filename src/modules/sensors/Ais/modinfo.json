@@ -13,20 +13,26 @@
             "RX": 18,
             "TX": 19,
             "debug": 0,
+            "order": 1,
             "options": {
+                "global": [0, 1],
                 "debug": [0, 1]
             }
         },
         {
             "global": 0,
-            "name": "AisPoll",
+            "name": "AisSens",
             "type": "Reading",
             "subtype": "AisParser",
             "id": "ais_parser",
             "widget": "anydataTmp",
             "page": "AIS",
             "descr": "Активные цели AIS",
-            "int": 2
+            "int": 2,
+            "order": 1,
+            "options": {
+               "global":[0, 1]
+            }
         }
     ],
     "about": {
@@ -51,7 +57,8 @@
             "TX": "Пин TX CAN-трансивера (CTX)",
             "debug": "1 — включить вывод логов в Serial, 0 — выключить",
             "int": "Интервал обновления данных в секундах",
-            "options": "Перечень элементов управления для выбора в выпадающем списке"
+            "order": "Позиция виджета в списке. чем меньше - тем выше в карточке",
+            "options": "Перечень элементов управления для выбора в выпадающем списке (для полей: global, debug)"
         },
         "funcInfo": []
     },

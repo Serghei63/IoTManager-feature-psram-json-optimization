@@ -10,13 +10,15 @@
             "widget": "anydata",
             "page": "ModbusGroup",
             "descr": "Ошибки на шине RS-485",
-            "RX": 18,
-            "TX": 19,
-            "DIR_PIN": 0,
+            "RX": 17,
+            "TX": 18,
+            "DIR_PIN": "",
             "baud": 9600,
             "protocol": "SERIAL_8N1",
             "debug": 0,
+            "order": 1,
             "options": {
+                "global": [0, 1],
                 "baud": ["9600", "115200"],
                 "protocol": ["SERIAL_8N1", "SERIAL_8N2"],
                 "debug": [0, 1]
@@ -35,7 +37,11 @@
             "addr": 1,
             "func": "0x03",
             "reg": "0x0000",
-            "count": 6
+            "count": 6,
+            "order": 1,
+            "options": {
+                "global": [0, 1]
+            }
         },
         {
             "global": 0,

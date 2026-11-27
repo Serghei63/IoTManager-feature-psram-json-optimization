@@ -1,6 +1,6 @@
 {
-    "name": "ESPs3_modbus",
-    "apssid": "ESP_modbus",
+    "name": "ESPs3_Radio",
+    "apssid": "ESP_Radio",
     "appass": "",
     "routerssid": "mega",
     "routerpass": "11111111",

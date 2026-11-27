@@ -28,7 +28,19 @@
       "telegram": 0,
       "int": 60,
       "async": 2,
-      "OTfreq": ""
+      "OTfreq": "",
+      "order": 1,
+      "options": {
+          "global": [0, 1],
+          "LogLevel": [0, 1, 2, 3],
+          "async": [0, 1, 2],
+          "telegram": [0, 1],
+          "centralHeating": [0, 1],
+          "centralHeating2": [0, 1],
+          "hotWater": [0, 1],
+          "summerMode": [0, 1],
+          "weatherThermostat": [0, 1]
+        }      
     }
   ],
   "about": {

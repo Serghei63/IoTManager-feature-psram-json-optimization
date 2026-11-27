@@ -14,7 +14,11 @@
             "can_id": "0x036",
             "ask_id": "0x037",
             "addr": 0,
-            "debug": 1
+            "debug": 1,
+            "options": {
+                "global": [0, 1],
+                "debug": [0, 1]
+            }
 
         },
                 {
@@ -26,11 +30,17 @@
             "widget": "anydataTmp",
             "page": "CAN slave",
             "descr": "Чтение данных CAN",
+            "needSave": 0,
             "int": 2,
             "cans_id": "0x036",
             "dlc" : 1,
             "adr": 0,
-            "debug": 1
+            "debug": 1,
+            "options": {
+                "global": [0, 1],
+                "debug": [0, 1],
+                "needSave": [0, 1]
+            }
 
         }
     ],
@@ -46,12 +56,16 @@
             "esp8266_4mb": 15
         },
         "subTypes": [
-            "canMaster" 
+            "canMaster",
+            "canSlave"
         ],
         "title": "CanBUS",
         "moduleDesc": "Позволяет управлять оборудованием по протоколу CAN",
         "propInfo": {
-            "debug": " 1 - включить вывод дебага , 0 - отключить дебаг"
+            "debug": " 1 - включить вывод дебага , 0 - отключить дебаг",
+            "int": "Количество секунд между опросами датчика.",
+            "needSave": "1 — сохранить показания в энергонезависимую память, 0 — не сохранять",
+            "options": "Перечень элементов управления для выбора в выпадающем списке (для полей: needSave, global, round, debug)"
         },
         "funcInfo": [
 

@@ -13,7 +13,11 @@
             "int": 60,
             "target": "rel4",
             "needSave": 1,
-            "num": 1
+            "order": 1,
+            "options": {
+                "global": [0, 1],
+                "needSave": [0, 1]
+            }
         }
     ],
     "about": {

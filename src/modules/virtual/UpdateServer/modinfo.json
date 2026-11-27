@@ -10,9 +10,13 @@
             "widget": "",
             "page": "",
             "descr": "",
-            "btn-startUpdateAll": "http://192.168.11.112/iotm/esp8266_4mb/400",
-            "btn-startUpdateFS": "http://192.168.11.112/iotm/esp8266_4mb/400",
-            "btn-startUpdateFW": "http://192.168.11.112/iotm/esp8266_4mb/400"
+            "btn-startUpdateAll": "http://192.168.2.110/iotm/esp32s3_n16r8/400",
+            "btn-startUpdateFS": "http://192.168.2.110/iotm/esp32s3_n16r8/400",
+            "btn-startUpdateFW": "http://192.168.2.110/iotm/esp32s3_n16r8/400",
+            "order": 1,
+            "options": {
+                "global": [0, 1]
+            }
         }
     ],
     "about": {
